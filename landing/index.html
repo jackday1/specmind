@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SpecMind — AI-Powered Spec Review & Knowledge Base</title>
+  <meta name="description" content="Upload your Google Docs spec, let AI find mismatches, unclear requirements, and missing configs. Chat with your team's knowledge base. Built for product and engineering teams." />
+  <meta name="keywords" content="spec review, AI analysis, specification documents, game design, product requirements, PRD review, AI knowledge base" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://specmind.io" />
+
+  <meta property="og:title" content="SpecMind — AI-Powered Spec Review & Knowledge Base" />
+  <meta property="og:description" content="Paste a Google Docs link. AI finds mismatches, unclear items, and missing configs. Chat with your knowledge base anytime." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://specmind.io" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="SpecMind — AI-Powered Spec Review" />
+  <meta name="twitter:description" content="Paste a Google Docs link. AI finds mismatches, unclear items, and missing configs. Chat with your knowledge base." />
+
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230c0b0a'/%3E%3Cpath d='M20 22h24M20 32h18M20 42h20' stroke='%23f06543' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='46' cy='42' r='6' fill='%23f06543'/%3E%3Cpath d='M44 40l2 2 4-4' stroke='%23fff' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"IBM Plex Sans"', 'system-ui', 'sans-serif'],
+            mono: ['"IBM Plex Mono"', 'monospace'],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    :root { --coral: #f06543; --bg: #0c0b0a; --surface: #151311; --border: #2a2520; --text: #efe9e1; --muted: #8f887e; --sub: #635d56; }
+    body { font-family: 'IBM Plex Sans', system-ui, sans-serif; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+    .mono { font-family: 'IBM Plex Mono', monospace; }
+    ::selection { background: rgba(240,101,67,0.18); color: var(--coral); }
+    .btn { background: var(--coral); color: #fff; font-weight: 600; font-size: 0.875rem; padding: 0.625rem 1.5rem; transition: background 0.15s; border: 0; cursor: pointer; }
+    .btn:hover { background: #d44a2a; }
+    .card { background: var(--surface); border: 1px solid var(--border); padding: 1.5rem; }
+  </style>
+</head>
+<body class="bg-[#0c0b0a]">
+
+  <!-- Nav -->
+  <nav class="border-b border-[#2a2520] bg-[#0c0b0a]/90 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
+      <a href="/" class="flex items-center gap-2 no-underline">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#f06543" stroke-width="2.5"><path d="M8 8h8M8 12h5M8 16h8" stroke-linecap="round"/></svg>
+        <span class="mono text-xs tracking-wider uppercase text-[#8f887e]">SpecMind</span>
+      </a>
+      <a href="#" class="btn text-sm px-4 py-2">Get started</a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="max-w-4xl mx-auto px-6 pt-24 pb-20 text-center">
+    <h1 class="text-4xl md:text-5xl font-bold text-[#efe9e1] leading-tight mb-6">
+      AI reviews your specs<br />so your team doesn't have to guess
+    </h1>
+    <p class="text-lg text-[#8f887e] max-w-2xl mx-auto mb-10 leading-relaxed">
+      Paste a Google Docs link. AI finds mismatches, unclear requirements, missing configs, and surfaces questions your developers will ask — before a single line of code is written.
+    </p>
+    <a href="#" class="btn text-base px-8 py-3 inline-block">Try it free</a>
+    <p class="text-xs text-[#635d56] mt-4 mono">No credit card. Google sign-in.</p>
+  </section>
+
+  <!-- Features -->
+  <section class="max-w-6xl mx-auto px-6 pb-24">
+    <div class="grid md:grid-cols-3 gap-px border border-[#2a2520] bg-[#2a2520]">
+      <div class="card">
+        <svg class="w-5 h-5 text-[#f06543] mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <h3 class="font-semibold text-[#efe9e1] mb-2">Instant analysis</h3>
+        <p class="text-sm text-[#8f887e] leading-relaxed">Drop a Google Docs or Sheets link. AI extracts the content and checks for issues in seconds.</p>
+      </div>
+      <div class="card">
+        <svg class="w-5 h-5 text-[#f06543] mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <h3 class="font-semibold text-[#efe9e1] mb-2">Catch what's missing</h3>
+        <p class="text-sm text-[#8f887e] leading-relaxed">Mismatched requirements, unclear specs, undefined configs — surfaced before they become production bugs.</p>
+      </div>
+      <div class="card">
+        <svg class="w-5 h-5 text-[#f06543] mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+        </svg>
+        <h3 class="font-semibold text-[#efe9e1] mb-2">Chat with your specs</h3>
+        <p class="text-sm text-[#8f887e] leading-relaxed">Your team can ask questions about any uploaded spec and get instant AI answers from the knowledge base.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="max-w-4xl mx-auto px-6 pb-24">
+    <h2 class="text-2xl font-bold text-[#efe9e1] text-center mb-12">How it works</h2>
+    <div class="grid md:grid-cols-3 gap-8">
+      <div class="text-center">
+        <div class="w-12 h-12 mx-auto mb-4 bg-[#151311] border border-[#2a2520] flex items-center justify-center mono text-sm font-bold text-[#f06543]">01</div>
+        <h3 class="font-semibold text-[#efe9e1] mb-2">Paste a link</h3>
+        <p class="text-sm text-[#8f887e] leading-relaxed">Share a Google Docs or Sheets link. Must be shared with "Anyone with the link can view".</p>
+      </div>
+      <div class="text-center">
+        <div class="w-12 h-12 mx-auto mb-4 bg-[#151311] border border-[#2a2520] flex items-center justify-center mono text-sm font-bold text-[#f06543]">02</div>
+        <h3 class="font-semibold text-[#efe9e1] mb-2">AI analyzes</h3>
+        <p class="text-sm text-[#8f887e] leading-relaxed">Within seconds, AI surfaces mismatches, unclear items, missing configs, and questions for your team.</p>
+      </div>
+      <div class="text-center">
+        <div class="w-12 h-12 mx-auto mb-4 bg-[#151311] border border-[#2a2520] flex items-center justify-center mono text-sm font-bold text-[#f06543]">03</div>
+        <h3 class="font-semibold text-[#efe9e1] mb-2">Iterate & chat</h3>
+        <p class="text-sm text-[#8f887e] leading-relaxed">Fix your spec, re-analyze, and chat with your knowledge base. Repeat until clean.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="max-w-2xl mx-auto px-6 pb-24 text-center">
+    <div class="card text-center py-12">
+      <h2 class="text-2xl font-bold text-[#efe9e1] mb-4">Ready to ship better specs?</h2>
+      <p class="text-[#8f887e] mb-8 max-w-md mx-auto">Join product and engineering teams using SpecMind to catch issues before implementation.</p>
+      <a href="#" class="btn text-base px-8 py-3 inline-block">Get started free</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="border-t border-[#2a2520] py-8 px-6">
+    <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <span class="mono text-xs text-[#8f887e]">SpecMind</span>
+        <span class="text-[#635d56] text-xs">—</span>
+        <span class="text-xs text-[#635d56]">AI-powered spec review</span>
+      </div>
+      <p class="text-xs text-[#635d56] mono">&copy; 2025 SpecMind. Built for product & engineering teams.</p>
+    </div>
+  </footer>
+
+</body>
+</html>

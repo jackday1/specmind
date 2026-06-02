@@ -1,0 +1,143 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --c-bg:        #0c0b0a;
+  --c-surface:   #151311;
+  --c-surface2:  #1d1a17;
+  --c-border:    #2a2520;
+  --c-border-hi: #3d3730;
+  --c-text:      #efe9e1;
+  --c-text-dim:  #8f887e;
+  --c-text-sub:  #635d56;
+  --c-coral:     #f06543;
+  --c-coral-d:   #d44a2a;
+  --c-coral-g:   rgba(240, 101, 67, 0.12);
+  --c-teal:      #2ec4b6;
+  --c-teal-g:    rgba(46, 196, 182, 0.12);
+  --c-amber:     #f0a64b;
+  --c-amber-g:   rgba(240, 166, 75, 0.12);
+  --c-red:       #e5534b;
+  --c-red-g:     rgba(229, 83, 75, 0.12);
+  --c-blue:      #539bf5;
+  --c-blue-g:    rgba(83, 155, 245, 0.12);
+  --c-green:     #3fb950;
+  --c-green-g:   rgba(63, 185, 80, 0.12);
+}
+
+body {
+  font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--c-bg);
+  color: var(--c-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+.mono {
+  font-family: 'IBM Plex Mono', 'SF Mono', monospace;
+}
+
+::selection {
+  background: var(--c-coral-g);
+  color: var(--c-coral);
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--c-border-hi); }
+::-webkit-scrollbar-thumb:hover { background: var(--c-text-sub); }
+
+.card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  padding: 1.25rem;
+  transition: border-color 0.15s ease;
+}
+
+.card:hover { border-color: var(--c-border-hi); }
+
+.btn-primary {
+  background: var(--c-coral);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  padding: 0.5rem 1rem;
+  letter-spacing: 0.01em;
+  transition: background 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-primary:hover:not(:disabled) { background: var(--c-coral-d); }
+.btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.btn-secondary {
+  background: transparent;
+  border: 1px solid var(--c-border);
+  color: var(--c-text-dim);
+  font-weight: 500;
+  font-size: 0.8125rem;
+  padding: 0.5rem 1rem;
+  letter-spacing: 0.01em;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-secondary:hover {
+  border-color: var(--c-border-hi);
+  color: var(--c-text);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--c-text-dim);
+  font-size: 0.8125rem;
+  padding: 0.375rem 0.5rem;
+  transition: color 0.15s ease;
+}
+
+.btn-ghost:hover { color: var(--c-text); }
+
+.input-field {
+  background: var(--c-surface2);
+  border: 1px solid var(--c-border);
+  color: var(--c-text);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s ease;
+  font-family: inherit;
+}
+
+.input-field::placeholder { color: var(--c-text-sub); }
+.input-field:focus { border-color: var(--c-coral); }
+
+.badge {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.1875rem 0.5rem;
+  border: 1px solid;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in { animation: fadeIn 0.2s ease forwards; }
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, var(--c-surface) 0%, var(--c-surface2) 50%, var(--c-surface) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
