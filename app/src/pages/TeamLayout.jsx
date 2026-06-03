@@ -114,6 +114,7 @@ export default function TeamLayout({ team, user, onTeamUpdate, onLogout }) {
   const [submittedDocId, setSubmittedDocId] = useState(null);
   const [projectId, setProjectId] = useState(null);
   const [projects, setProjects] = useState([]);
+  const [projectsLoading, setProjectsLoading] = useState(true);
 
   const isOwner = team.ownerId === user.uid;
 
@@ -127,6 +128,7 @@ export default function TeamLayout({ team, user, onTeamUpdate, onLogout }) {
         setProjectId(data[0]._id);
       }
     } catch (err) { console.error(err); }
+    finally { setProjectsLoading(false); }
   };
 
   const handleProjectChange = (id) => {
@@ -215,7 +217,11 @@ export default function TeamLayout({ team, user, onTeamUpdate, onLogout }) {
         )}
       </header>
 
-      {projects.length === 0 ? (
+      {projectsLoading ? (
+        <div class="flex-1 flex items-center justify-center">
+          <div class="w-5 h-5 border-2 border-[#8f887e] border-t-[#f06543] animate-spin" />
+        </div>
+      ) : projects.length === 0 ? (
         <NoProjectScreen isOwner={isOwner} onCreate={handleProjectCreated} />
       ) : (
         <main class="flex-1 max-w-6xl mx-auto w-full p-4 md:p-6">
