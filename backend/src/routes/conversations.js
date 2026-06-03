@@ -4,7 +4,7 @@ import Message from '../models/Message.js';
 import Team from '../models/Team.js';
 import Member from '../models/Member.js';
 import Document from '../models/Document.js';
-import { selectRelevantDocs, answerQuestion } from '../services/ai.js';
+import { selectRelevantDocs, answerQuestion, answerQuestionStream } from '../services/ai.js';
 import { checkMessageLimit } from '../services/plan.js';
 
 const router = Router();
@@ -176,17 +176,93 @@ router.post('/:id/ask', async (req, res) => {
       status: 'analyzed',
     }).select('name extractedText chunks');
 
-    let answer;
     if (docs.length === 0) {
-      answer =
+      const answer =
         'No analyzed documents are available yet. Please submit a Google Docs link for analysis first.';
-    } else {
-      const relevantDocs = await selectRelevantDocs(question.trim(), docs);
-      answer = await answerQuestion(
-        question.trim(),
-        relevantDocs.length > 0 ? relevantDocs : docs.slice(0, 3),
-      );
+
+      await Message.create({
+        conversationId: conversation._id,
+        userId: req.user.uid,
+        teamId: team._id,
+        role: 'assistant',
+        content: answer,
+        timestamp: new Date(),
+      });
+
+      await conversation.save();
+      await Team.findByIdAndUpdate(team._id, { $inc: { messageCount: 1 } });
+
+      if (req.body.stream) {
+        res.writeHead(200, {
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          Connection: 'keep-alive',
+          'X-Accel-Buffering': 'no',
+        });
+        res.flushHeaders();
+        res.write(`data: ${JSON.stringify({ chunk: answer })}\n\n`);
+        res.write(
+          `data: ${JSON.stringify({ done: true, conversation: await attachMessages(conversation) })}\n\n`,
+        );
+        return res.end();
+      }
+
+      return res.json({ answer, conversation: await attachMessages(conversation) });
     }
+
+    const relevantDocs = await selectRelevantDocs(question.trim(), docs);
+    const selectedDocs =
+      relevantDocs.length > 0 ? relevantDocs : docs.slice(0, 3);
+
+    if (req.body.stream) {
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+        'X-Accel-Buffering': 'no',
+      });
+      res.flushHeaders();
+
+      let fullAnswer = '';
+      try {
+        for await (const chunk of answerQuestionStream(
+          question.trim(),
+          selectedDocs,
+        )) {
+          if (chunk) {
+            fullAnswer += chunk;
+            res.write(
+              `data: ${JSON.stringify({ chunk })}\n\n`,
+            );
+          }
+        }
+      } catch (streamErr) {
+        console.error('Stream error:', streamErr);
+        res.write(
+          `data: ${JSON.stringify({ error: 'AI stream failed' })}\n\n`,
+        );
+        return res.end();
+      }
+
+      await Message.create({
+        conversationId: conversation._id,
+        userId: req.user.uid,
+        teamId: team._id,
+        role: 'assistant',
+        content: fullAnswer,
+        timestamp: new Date(),
+      });
+
+      await conversation.save();
+      await Team.findByIdAndUpdate(team._id, { $inc: { messageCount: 1 } });
+
+      res.write(
+        `data: ${JSON.stringify({ done: true, conversation: await attachMessages(conversation) })}\n\n`,
+      );
+      return res.end();
+    }
+
+    const answer = await answerQuestion(question.trim(), selectedDocs);
 
     await Message.create({
       conversationId: conversation._id,
@@ -198,7 +274,6 @@ router.post('/:id/ask', async (req, res) => {
     });
 
     await conversation.save();
-
     await Team.findByIdAndUpdate(team._id, { $inc: { messageCount: 1 } });
 
     res.json({ answer, conversation: await attachMessages(conversation) });

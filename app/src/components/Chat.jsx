@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'preact/hooks';
-import { getConversations, createConversation, getConversation, askConversation, deleteConversation, loadMoreMessages } from '../api.js';
+import { getConversations, createConversation, getConversation, askConversationStream, deleteConversation, loadMoreMessages } from '../api.js';
 
 export default function Chat({ teamId, projectId }) {
   const [conversations, setConversations] = useState([]);
@@ -12,6 +12,7 @@ export default function Chat({ teamId, projectId }) {
   const [loadingMore, setLoadingMore] = useState(false);
   const scrollRef = useRef(null);
   const scrollRestore = useRef(null);
+  const abortRef = useRef(null);
 
   useEffect(() => { if (projectId) loadConversations(); }, [projectId]);
 
@@ -90,15 +91,50 @@ export default function Chat({ teamId, projectId }) {
     setInput('');
     setSending(true);
     setMessages((prev) => [...prev, { role: 'user', content: question, timestamp: new Date().toISOString() }]);
+
+    abortRef.current = new AbortController();
+
+    let streamedContent = '';
+    setMessages((prev) => [...prev, { role: 'assistant', content: '', timestamp: new Date().toISOString() }]);
+
     try {
-      const { answer } = await askConversation(activeId, question);
-      setMessages((prev) => [...prev, { role: 'assistant', content: answer, timestamp: new Date().toISOString() }]);
-      loadConversations();
+      await askConversationStream(activeId, question, {
+        signal: abortRef.current.signal,
+        onChunk: (chunk) => {
+          streamedContent += chunk;
+          setMessages((prev) => {
+            const updated = [...prev];
+            const last = updated[updated.length - 1];
+            updated[updated.length - 1] = { ...last, content: streamedContent };
+            return updated;
+          });
+        },
+        onDone: () => {
+          loadConversations();
+        },
+        onError: (msg) => {
+          setLimitError(msg);
+          setMessages((prev) => {
+            const updated = [...prev];
+            const last = updated[updated.length - 1];
+            updated[updated.length - 1] = { ...last, content: updated[updated.length - 1].content || msg };
+            return updated;
+          });
+        },
+      });
     } catch (err) {
-      const msg = err.message || 'Something went wrong. Please try again.';
-      setLimitError(msg);
-      setMessages((prev) => [...prev, { role: 'assistant', content: msg, timestamp: new Date().toISOString() }]);
+      if (err.name !== 'AbortError') {
+        const msg = err.message || 'Something went wrong. Please try again.';
+        setLimitError(msg);
+        setMessages((prev) => {
+          const updated = [...prev];
+          const last = updated[updated.length - 1];
+          updated[updated.length - 1] = { ...last, content: updated[updated.length - 1].content || msg };
+          return updated;
+        });
+      }
     } finally {
+      abortRef.current = null;
       setSending(false);
     }
   };
@@ -172,12 +208,6 @@ export default function Chat({ teamId, projectId }) {
                   </div>
                 </div>
               ))}
-              {sending && (
-                <div class="flex gap-3">
-                  <div class="w-7 h-7 bg-[#1d1a17] text-[#8f887e] border border-[#2a2520] flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">AI</div>
-                  <div class="bg-[#151311] border border-[#2a2520] px-4 py-2.5"><span class="inline-block w-2 h-2 bg-[#f06543] animate-pulse" /></div>
-                </div>
-              )}
             </div>
             <form onSubmit={handleSend} class="flex gap-3 p-4 md:p-6 border-t border-[#2a2520]">
               <input type="text" value={input} onInput={(e) => setInput(e.target.value)} placeholder={limitError ? 'Message limit reached' : 'Ask about your specifications...'} disabled={sending || !!limitError} class="input-field flex-1 disabled:opacity-30" />

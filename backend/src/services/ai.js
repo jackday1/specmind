@@ -199,6 +199,32 @@ export async function answerQuestion(question, selectedDocs) {
   return response.choices[0].message.content;
 }
 
+export async function* answerQuestionStream(question, selectedDocs) {
+  const context = selectedDocs
+    .map((d) => `--- Document: ${d.name} ---\n${d.extractedText?.slice(0, 15000) || d.chunks?.join('\n')?.slice(0, 15000) || ''}`)
+    .join('\n\n');
+
+  const stream = await openai.chat.completions.create({
+    model: 'deepseek-chat',
+    messages: [
+      {
+        role: 'system',
+        content: `You are a helpful assistant that answers questions about specification documents. Use the provided document context to answer the user's question accurately. If the answer cannot be found in the documents, say so. Be concise and specific. Cite document names when referencing information.`,
+      },
+      {
+        role: 'user',
+        content: `Context from specification documents:\n\n${context}\n\nQuestion: ${question}`,
+      },
+    ],
+    temperature: 0.4,
+    stream: true,
+  });
+
+  for await (const chunk of stream) {
+    yield chunk.choices[0]?.delta?.content || '';
+  }
+}
+
 const CHAT_HISTORY_PREFIX = 'chat:history:';
 const CHAT_HISTORY_TTL = 86400 * 7;
 
