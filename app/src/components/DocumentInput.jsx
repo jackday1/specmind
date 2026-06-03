@@ -23,7 +23,12 @@ export default function DocumentInput({ projectId, onSubmitted }) {
       setUrl('');
       onSubmitted(doc);
     } catch (err) {
-      setError(err.message);
+      if (err.existingDocId) {
+        setUrl('');
+        onSubmitted({ _id: err.existingDocId });
+      } else {
+        setError(err.message);
+      }
     } finally {
       setSubmitting(false);
     }

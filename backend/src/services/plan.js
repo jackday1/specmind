@@ -47,7 +47,6 @@ export function checkAcceptLimit(team, currentMemberCount) {
 export async function checkDocumentLimit(team, Document) {
   const plan =
     (planCache && planCache[team.plan]) || planCache?.free || FALLBACK_PLAN;
-  console.log({ plan });
   const count = await Document.countDocuments({ teamId: team._id });
   if (count >= plan.maxDocuments) {
     return `Your ${plan.label} plan allows up to ${plan.maxDocuments} documents. Upgrade to add more.`;

@@ -20,7 +20,9 @@ async function request(path, options = {}) {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(err.error || 'Request failed');
+    const error = new Error(err.error || 'Request failed');
+    if (err.existingDocId) error.existingDocId = err.existingDocId;
+    throw error;
   }
   return res.json();
 }

@@ -2,7 +2,7 @@ import { Router } from 'express';
 import Document from '../models/Document.js';
 import Team from '../models/Team.js';
 import Member from '../models/Member.js';
-import { fetchGoogleDocText } from '../services/gdocs.js';
+import { fetchGoogleDocText, extractDocId } from '../services/gdocs.js';
 import { analyzeDocument } from '../services/ai.js';
 import { chunkText } from '../services/storage.js';
 import { checkDocumentLimit } from '../services/plan.js';
@@ -85,6 +85,19 @@ router.post('/link', async (req, res) => {
 
     const limitError = await checkDocumentLimit(team, Document);
     if (limitError) return res.status(403).json({ error: limitError });
+
+    const urlDocId = extractDocId(url.trim());
+    const existing = await Document.findOne({
+      teamId: team._id,
+      projectId,
+      sourceUrl: { $regex: `/d/${urlDocId}(/|$|\\?)` },
+    });
+    if (existing) {
+      return res.status(409).json({
+        error: 'This document has already been analyzed. Use the reanalyze option on the existing entry instead.',
+        existingDocId: existing._id,
+      });
+    }
 
     const { text, docId, title } = await fetchGoogleDocText(url.trim());
 
