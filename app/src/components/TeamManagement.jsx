@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
-import { inviteMember, getTeamInvites, removeInvite, getPlans } from '../api.js';
+import { inviteMember, getTeamInvites, removeInvite, getPlans, getMyTeam } from '../api.js';
 
 function MemberAvatar({ email, photoURL, isSelf, size }) {
   const s = size || '7';
@@ -20,7 +20,14 @@ export default function TeamManagement({ team, user, isOwner, onTeamUpdate }) {
   const [message, setMessage] = useState('');
   const [planConfigs, setPlanConfigs] = useState({});
 
-  useEffect(() => { if (isOwner) loadInvites(); loadPlans(); }, [team._id]);
+  useEffect(() => { if (isOwner) loadInvites(); loadPlans(); refreshTeam(); }, [team._id]);
+
+  const refreshTeam = async () => {
+    try {
+      const data = await getMyTeam();
+      if (data.team) onTeamUpdate(data.team);
+    } catch (err) { console.error(err); }
+  };
 
   const loadPlans = async () => {
     try {
@@ -95,11 +102,18 @@ export default function TeamManagement({ team, user, isOwner, onTeamUpdate }) {
             </div>
             <div>
               <p class="text-[10px] text-[#635d56] mono uppercase">Documents</p>
-              <p class="text-sm text-[#8f887e]">Up to {plan.maxDocuments}</p>
+              <p class="text-sm text-[#efe9e1]">
+                <span class="text-[#f06543]">{team.documentCount || 0}</span>
+                <span class="text-[#8f887e]"> / {plan.maxDocuments}</span>
+              </p>
             </div>
             <div>
               <p class="text-[10px] text-[#635d56] mono uppercase">Messages</p>
-              <p class="text-sm text-[#8f887e]">Up to {plan.maxMessages}</p>
+              <p class="text-sm text-[#efe9e1]">
+                <span class="text-[#f06543]">{team.messageCount || 0}</span>
+                <span class="text-[#8f887e]"> / {plan.maxMessages}</span>
+              </p>
+              <p class="text-[10px] text-[#635d56] mt-0.5">Resets monthly</p>
             </div>
           </div>
           {team.plan === 'free' && isOwner && (

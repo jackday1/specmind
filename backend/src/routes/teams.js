@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import Team from '../models/Team.js';
 import Member from '../models/Member.js';
+import Document from '../models/Document.js';
 import { checkMemberLimit, checkAcceptLimit } from '../services/plan.js';
 import { getAuth } from '../services/firebase.js';
 
@@ -65,7 +66,9 @@ router.get('/mine', async (req, res) => {
   try {
     const team = await getUserTeam(req.user.uid);
     if (!team) return res.json({ team: null });
-    res.json({ team: await attachMembers(team) });
+    const result = await attachMembers(team);
+    result.documentCount = await Document.countDocuments({ teamId: team._id });
+    res.json({ team: result });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
