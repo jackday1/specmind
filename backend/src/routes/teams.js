@@ -203,4 +203,31 @@ router.delete('/:id/invites/:email', async (req, res) => {
   }
 });
 
+router.post('/start-trial', async (req, res) => {
+  try {
+    const { planKey } = req.body;
+    if (!planKey || !['standard', 'pro', 'business'].includes(planKey)) {
+      return res.status(400).json({ error: 'Invalid plan key' });
+    }
+
+    const team = await Team.findOne({ ownerId: req.user.uid });
+    if (!team) return res.status(404).json({ error: 'You are not an owner of any team' });
+
+    if (team.trialEndsAt && new Date(team.trialEndsAt) > new Date()) {
+      return res.status(400).json({ error: 'You already have an active trial' });
+    }
+
+    const now = new Date();
+    team.trialPlan = planKey;
+    team.trialStartedAt = now;
+    team.trialEndsAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    await team.save();
+
+    const result = await attachMembers(team);
+    res.json({ team: result });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

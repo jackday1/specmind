@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'preact/hooks';
-import { inviteMember, getTeamInvites, removeInvite, getPlans, getMyTeam } from '../api.js';
+import { inviteMember, getTeamInvites, removeInvite, getPlans, getMyTeam, startTrial } from '../api.js';
 
 function MemberAvatar({ email, photoURL, isSelf, size }) {
   const s = size || '7';
@@ -19,6 +19,9 @@ export default function TeamManagement({ team, user, isOwner, onTeamUpdate }) {
   const [sending, setSending] = useState(false);
   const [message, setMessage] = useState('');
   const [planConfigs, setPlanConfigs] = useState({});
+  const [showPlanPicker, setShowPlanPicker] = useState(false);
+  const [trialLoading, setTrialLoading] = useState('');
+  const [trialError, setTrialError] = useState('');
 
   useEffect(() => { if (isOwner) loadInvites(); loadPlans(); refreshTeam(); }, [team._id]);
 
@@ -71,6 +74,26 @@ export default function TeamManagement({ team, user, isOwner, onTeamUpdate }) {
   const otherMembers = members.filter((m) => m.role !== 'owner');
   const memberCount = members.length;
   const plan = planConfigs[team.plan] || planConfigs.free || { label: 'Free', maxMembers: 3, maxDocuments: 10, maxMessages: 20 };
+  const isTrialActive = team.trialEndsAt && new Date(team.trialEndsAt) > new Date();
+  const trialPlanConfig = isTrialActive ? (planConfigs[team.trialPlan] || plan) : null;
+  const activePlan = trialPlanConfig || plan;
+  const trialDaysLeft = isTrialActive ? Math.ceil((new Date(team.trialEndsAt) - new Date()) / (1000 * 60 * 60 * 24)) : 0;
+
+  const handleStartTrial = async (planKey) => {
+    setTrialLoading(planKey);
+    setTrialError('');
+    try {
+      const data = await startTrial(planKey);
+      onTeamUpdate(data.team);
+      setShowPlanPicker(false);
+    } catch (err) {
+      setTrialError(err.message);
+    } finally {
+      setTrialLoading('');
+    }
+  };
+
+  const upgradePlans = Object.values(planConfigs).filter((p) => p.key !== 'free').sort((a, b) => a.sortOrder - b.sortOrder);
 
   return (
     <div>
@@ -84,8 +107,8 @@ export default function TeamManagement({ team, user, isOwner, onTeamUpdate }) {
             Created {new Date(team.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
           </p>
         </div>
-        <span class={`badge ml-auto ${team.plan === 'free' ? 'bg-[rgba(99,99,86,0.08)] text-[#8f887e] border-[rgba(99,99,86,0.15)]' : 'bg-[rgba(240,101,67,0.08)] text-[#f06543] border-[rgba(240,101,67,0.15)]'}`}>
-          {plan.label} plan
+        <span class={`badge ml-auto ${isTrialActive ? 'bg-[rgba(59,130,246,0.08)] text-[#539bf5] border-[rgba(83,155,245,0.15)]' : (team.trialPlan ? 'bg-[rgba(240,101,67,0.08)] text-[#f06543] border-[rgba(240,101,67,0.15)]' : 'bg-[rgba(99,99,86,0.08)] text-[#8f887e] border-[rgba(99,99,86,0.15)]')}`}>
+          {isTrialActive ? `Trial · ${trialPlanConfig.label}` : activePlan.label} plan
         </span>
       </div>
 
@@ -97,28 +120,66 @@ export default function TeamManagement({ team, user, isOwner, onTeamUpdate }) {
               <p class="text-[10px] text-[#635d56] mono uppercase">Members</p>
               <p class="text-sm text-[#efe9e1]">
                 <span class="text-[#f06543]">{memberCount}</span>
-                <span class="text-[#8f887e]"> / {plan.maxMembers}</span>
+                <span class="text-[#8f887e]"> / {activePlan.maxMembers}</span>
               </p>
             </div>
             <div>
               <p class="text-[10px] text-[#635d56] mono uppercase">Documents</p>
               <p class="text-sm text-[#efe9e1]">
                 <span class="text-[#f06543]">{team.documentCount || 0}</span>
-                <span class="text-[#8f887e]"> / {plan.maxDocuments}</span>
+                <span class="text-[#8f887e]"> / {activePlan.maxDocuments}</span>
               </p>
             </div>
             <div>
               <p class="text-[10px] text-[#635d56] mono uppercase">Messages</p>
               <p class="text-sm text-[#efe9e1]">
                 <span class="text-[#f06543]">{team.messageCount || 0}</span>
-                <span class="text-[#8f887e]"> / {plan.maxMessages}</span>
+                <span class="text-[#8f887e]"> / {activePlan.maxMessages}</span>
               </p>
               <p class="text-[10px] text-[#635d56] mt-0.5">Resets monthly</p>
             </div>
           </div>
-          {team.plan === 'free' && isOwner && (
+          {isTrialActive && (
             <div class="mt-3 pt-3 border-t border-[#2a2520]">
-              <p class="text-xs text-[#8f887e]">Need more? <a href="#" class="text-[#f06543] hover:underline">Upgrade your plan</a></p>
+              <div class="flex items-center gap-2">
+                <svg class="w-3.5 h-3.5 text-[#539bf5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <p class="text-xs text-[#539bf5]">
+                  Trial active &middot; {trialDaysLeft} day{trialDaysLeft !== 1 ? 's' : ''} left
+                </p>
+              </div>
+            </div>
+          )}
+          {!isTrialActive && isOwner && !showPlanPicker && (
+            <div class="mt-3 pt-3 border-t border-[#2a2520]">
+              <button onClick={() => setShowPlanPicker(true)} class="text-xs text-[#f06543] hover:underline">
+                {team.plan === 'free' ? 'Upgrade your plan' : 'Change plan'}
+              </button>
+            </div>
+          )}
+          {!isTrialActive && isOwner && showPlanPicker && (
+            <div class="mt-3 pt-3 border-t border-[#2a2520]">
+              <p class="text-xs text-[#efe9e1] font-medium mb-2">Try a plan free for 7 days</p>
+              {trialError && (
+                <div class="text-xs text-[#e5534b] bg-[rgba(229,83,75,0.06)] border border-[rgba(229,83,75,0.15)] px-3 py-2 mb-3">{trialError}</div>
+              )}
+              <div class="grid grid-cols-3 gap-2">
+                {upgradePlans.map((p) => (
+                  <div key={p.key} class="bg-[#1d1a17] border border-[#2a2520] p-3 text-center">
+                    <p class="text-sm font-semibold text-[#efe9e1]">{p.label}</p>
+                    <p class="text-[10px] text-[#8f887e] mt-0.5 mb-2">
+                      {p.maxMembers} members &middot; {p.maxDocuments} docs &middot; {p.maxMessages} msgs
+                    </p>
+                    <button
+                      onClick={() => handleStartTrial(p.key)}
+                      disabled={!!trialLoading}
+                      class="text-xs text-[#f06543] hover:underline disabled:opacity-50"
+                    >
+                      {trialLoading === p.key ? 'Starting...' : 'Start free trial'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button onClick={() => { setShowPlanPicker(false); setTrialError(''); }} class="text-[10px] text-[#8f887e] hover:text-[#efe9e1] mt-2">Cancel</button>
             </div>
           )}
         </div>

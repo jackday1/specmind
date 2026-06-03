@@ -8,6 +8,9 @@ const teamSchema = new mongoose.Schema(
     invitedEmails: [{ type: String, lowercase: true, trim: true }],
     plan: { type: String, enum: ['free', 'standard', 'pro', 'business'], default: 'free' },
     messageCount: { type: Number, default: 0 },
+    trialPlan: { type: String, enum: ['standard', 'pro', 'business'], default: null },
+    trialStartedAt: { type: Date, default: null },
+    trialEndsAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

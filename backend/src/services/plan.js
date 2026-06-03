@@ -20,14 +20,27 @@ export async function loadPlans() {
   return planCache;
 }
 
+function getActivePlanKey(team) {
+  if (team.trialEndsAt && new Date(team.trialEndsAt) > new Date()) {
+    return team.trialPlan;
+  }
+  return team.plan;
+}
+
 export async function getPlanConfig(team) {
   if (!planCache) await loadPlans();
-  return planCache[team.plan] || planCache.free || FALLBACK_PLAN;
+  const key = getActivePlanKey(team);
+  return planCache[key] || planCache.free || FALLBACK_PLAN;
+}
+
+export function getActivePlan(team) {
+  if (!planCache) return FALLBACK_PLAN;
+  const key = getActivePlanKey(team);
+  return planCache[key] || planCache.free || FALLBACK_PLAN;
 }
 
 export function checkMemberLimit(team, currentMemberCount) {
-  const plan =
-    (planCache && planCache[team.plan]) || planCache?.free || FALLBACK_PLAN;
+  const plan = getActivePlan(team);
   const current = currentMemberCount + (team.invitedEmails || []).length;
   if (current >= plan.maxMembers) {
     return `Your ${plan.label} plan allows up to ${plan.maxMembers} members. Upgrade to add more.`;
@@ -36,8 +49,7 @@ export function checkMemberLimit(team, currentMemberCount) {
 }
 
 export function checkAcceptLimit(team, currentMemberCount) {
-  const plan =
-    (planCache && planCache[team.plan]) || planCache?.free || FALLBACK_PLAN;
+  const plan = getActivePlan(team);
   if (currentMemberCount >= plan.maxMembers) {
     return `This team is full (${plan.maxMembers} member limit on the ${plan.label} plan).`;
   }
@@ -45,8 +57,7 @@ export function checkAcceptLimit(team, currentMemberCount) {
 }
 
 export async function checkDocumentLimit(team, Document) {
-  const plan =
-    (planCache && planCache[team.plan]) || planCache?.free || FALLBACK_PLAN;
+  const plan = getActivePlan(team);
   const count = await Document.countDocuments({ teamId: team._id });
   if (count >= plan.maxDocuments) {
     return `Your ${plan.label} plan allows up to ${plan.maxDocuments} documents. Upgrade to add more.`;
@@ -55,8 +66,7 @@ export async function checkDocumentLimit(team, Document) {
 }
 
 export function checkMessageLimit(team) {
-  const plan =
-    (planCache && planCache[team.plan]) || planCache?.free || FALLBACK_PLAN;
+  const plan = getActivePlan(team);
   if ((team.messageCount || 0) >= plan.maxMessages) {
     return `Your ${plan.label} plan allows up to ${plan.maxMessages} messages. Upgrade to send more.`;
   }

@@ -173,3 +173,7 @@ export async function deleteProject(id) {
 export async function getPlans() {
   return request('/plans');
 }
+
+export async function startTrial(planKey) {
+  return request('/teams/start-trial', { method: 'POST', body: JSON.stringify({ planKey }) });
+}
