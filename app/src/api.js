@@ -97,6 +97,10 @@ export async function askConversation(id, question) {
   return request(`/conversations/${id}/ask`, { method: 'POST', body: JSON.stringify({ question }) });
 }
 
+export async function loadMoreMessages(id, before) {
+  return request(`/conversations/${id}/messages?before=${encodeURIComponent(before)}`);
+}
+
 export async function deleteConversation(id) {
   return request(`/conversations/${id}`, { method: 'DELETE' });
 }

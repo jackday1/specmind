@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'preact/hooks';
-import { getConversations, createConversation, getConversation, askConversation, deleteConversation } from '../api.js';
+import { getConversations, createConversation, getConversation, askConversation, deleteConversation, loadMoreMessages } from '../api.js';
 
 export default function Chat({ teamId, projectId }) {
   const [conversations, setConversations] = useState([]);
@@ -8,12 +8,18 @@ export default function Chat({ teamId, projectId }) {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [limitError, setLimitError] = useState('');
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const scrollRef = useRef(null);
+  const loadingMoreRef = useRef(false);
 
   useEffect(() => { if (projectId) loadConversations(); }, [projectId]);
 
   useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (scrollRef.current && !loadingMoreRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+    loadingMoreRef.current = false;
   }, [messages]);
 
   const loadConversations = async () => {
@@ -25,6 +31,7 @@ export default function Chat({ teamId, projectId }) {
       const conv = await getConversation(id);
       setActiveId(id);
       setMessages(conv.messages || []);
+      setHasMore(conv.hasMore || false);
       setLimitError('');
     } catch (err) { console.error(err); }
   };
@@ -36,6 +43,7 @@ export default function Chat({ teamId, projectId }) {
       setConversations((prev) => [conv, ...prev]);
       setActiveId(conv._id);
       setMessages([]);
+      setHasMore(false);
       setLimitError('');
     } catch (err) { console.error(err); }
   };
@@ -49,6 +57,29 @@ export default function Chat({ teamId, projectId }) {
       setConversations(updated);
       if (activeId === id) { setActiveId(null); setMessages([]); }
     } catch (err) { console.error(err); }
+  };
+
+  const handleLoadMore = async () => {
+    if (loadingMore || !hasMore || messages.length === 0) return;
+    setLoadingMore(true);
+    loadingMoreRef.current = true;
+    const prevHeight = scrollRef.current?.scrollHeight || 0;
+    try {
+      const oldest = messages[0];
+      const { messages: older, hasMore: more } = await loadMoreMessages(activeId, oldest.timestamp);
+      setMessages((prev) => [...older, ...prev]);
+      setHasMore(more);
+      requestAnimationFrame(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight - prevHeight;
+        }
+      });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingMore(false);
+      loadingMoreRef.current = false;
+    }
   };
 
   const handleSend = async (e) => {
@@ -121,6 +152,13 @@ export default function Chat({ teamId, projectId }) {
               </div>
             )}
             <div ref={scrollRef} class="flex-1 overflow-y-auto space-y-4 p-4 md:p-6">
+              {hasMore && (
+                <div class="text-center pb-2">
+                  <button onClick={handleLoadMore} disabled={loadingMore} class="text-[10px] text-[#8f887e] hover:text-[#efe9e1] transition-colors disabled:opacity-40">
+                    {loadingMore ? 'Loading...' : 'Load earlier messages'}
+                  </button>
+                </div>
+              )}
               {messages.length === 0 && <div class="text-center mt-20"><p class="text-sm text-[#8f887e]">Ask a question to get started</p></div>}
               {messages.map((msg, i) => (
                 <div key={i} class={`flex gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
