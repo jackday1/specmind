@@ -11,15 +11,19 @@ export default function Chat({ teamId, projectId }) {
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const scrollRef = useRef(null);
-  const loadingMoreRef = useRef(false);
+  const scrollRestore = useRef(null);
 
   useEffect(() => { if (projectId) loadConversations(); }, [projectId]);
 
   useEffect(() => {
-    if (scrollRef.current && !loadingMoreRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (!scrollRef.current) return;
+    if (scrollRestore.current) {
+      const { prevTop, prevHeight } = scrollRestore.current;
+      scrollRef.current.scrollTop = prevTop + (scrollRef.current.scrollHeight - prevHeight);
+      scrollRestore.current = null;
+      return;
     }
-    loadingMoreRef.current = false;
+    scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages]);
 
   const loadConversations = async () => {
@@ -62,23 +66,20 @@ export default function Chat({ teamId, projectId }) {
   const handleLoadMore = async () => {
     if (loadingMore || !hasMore || messages.length === 0) return;
     setLoadingMore(true);
-    loadingMoreRef.current = true;
-    const prevHeight = scrollRef.current?.scrollHeight || 0;
+    scrollRestore.current = {
+      prevTop: scrollRef.current?.scrollTop || 0,
+      prevHeight: scrollRef.current?.scrollHeight || 0,
+    };
     try {
       const oldest = messages[0];
       const { messages: older, hasMore: more } = await loadMoreMessages(activeId, oldest.timestamp);
       setMessages((prev) => [...older, ...prev]);
       setHasMore(more);
-      requestAnimationFrame(() => {
-        if (scrollRef.current) {
-          scrollRef.current.scrollTop = scrollRef.current.scrollHeight - prevHeight;
-        }
-      });
     } catch (err) {
+      scrollRestore.current = null;
       console.error(err);
     } finally {
       setLoadingMore(false);
-      loadingMoreRef.current = false;
     }
   };
 
