@@ -22,6 +22,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-ERBL0R59JW"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-ERBL0R59JW');
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -54,7 +61,7 @@
         <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="#f06543" stroke-width="2.5"><path d="M8 8h8M8 12h5M8 16h8" stroke-linecap="round"/></svg>
         <span class="mono text-xs tracking-wider uppercase text-[#8f887e]">SpecMind</span>
       </a>
-      <a href="https://specmind-sqr1.onrender.com" class="btn text-sm px-4 py-2">Get started</a>
+      <a href="https://specmind-sqr1.onrender.com" class="btn text-sm px-4 py-2" onclick="gtag('event', 'click_app_button', { location: 'nav', text: 'Get started' })">Get started</a>
     </div>
   </nav>
 
@@ -66,7 +73,7 @@
     <p class="text-lg text-[#8f887e] max-w-2xl mx-auto leading-relaxed mb-8">
       Paste a Google Docs link. AI finds mismatches, unclear requirements, missing configs, and surfaces questions your developers will ask — before a single line of code is written.
     </p>
-    <a href="https://specmind-sqr1.onrender.com" class="btn text-base px-8 py-3 inline-block">Get started free</a>
+    <a href="https://specmind-sqr1.onrender.com" class="btn text-base px-8 py-3 inline-block" onclick="gtag('event', 'click_app_button', { location: 'hero', text: 'Get started free' })">Get started free</a>
   </section>
 
   <!-- Features -->
@@ -124,9 +131,7 @@
             20 chat messages
           </li>
         </ul>
-        <a href="https://specmind-sqr1.onrender.com" class="btn text-sm px-4 py-2 mt-4 text-center inline-block">Get started</a>
-      </div>
-      <!-- Standard -->
+        <a href="https://specmind-sqr1.onrender.com" class="btn text-sm px-4 py-2 mt-4 text-center inline-block" onclick="gtag('event', 'click_app_button', { location: 'pricing_free', text: 'Get started' })">Get started</a>
       <div class="card flex flex-col border-l-2 border-l-[#f06543]">
         <div class="mb-4">
           <h3 class="font-semibold text-[#efe9e1] text-lg">Standard</h3>
@@ -153,9 +158,7 @@
             Everything in Free
           </li>
         </ul>
-        <a href="https://specmind-sqr1.onrender.com" class="btn text-sm px-4 py-2 mt-4 text-center inline-block">Try free</a>
-      </div>
-      <!-- Pro -->
+        <a href="https://specmind-sqr1.onrender.com" class="btn text-sm px-4 py-2 mt-4 text-center inline-block" onclick="gtag('event', 'click_app_button', { location: 'pricing_standard', text: 'Try free' })">Try free</a>
       <div class="card flex flex-col">
         <div class="mb-4">
           <h3 class="font-semibold text-[#efe9e1] text-lg">Pro</h3>
@@ -182,9 +185,7 @@
             Everything in Standard
           </li>
         </ul>
-        <a href="https://specmind-sqr1.onrender.com" class="btn text-sm px-4 py-2 mt-4 text-center inline-block">Try free</a>
-      </div>
-      <!-- Business -->
+        <a href="https://specmind-sqr1.onrender.com" class="btn text-sm px-4 py-2 mt-4 text-center inline-block" onclick="gtag('event', 'click_app_button', { location: 'pricing_pro', text: 'Try free' })">Try free</a>
       <div class="card flex flex-col">
         <div class="mb-4">
           <h3 class="font-semibold text-[#efe9e1] text-lg">Business</h3>
@@ -211,9 +212,7 @@
             Everything in Pro
           </li>
         </ul>
-        <a href="https://specmind-sqr1.onrender.com" class="btn text-sm px-4 py-2 mt-4 text-center inline-block">Try free</a>
-      </div>
-    </div>
+        <a href="https://specmind-sqr1.onrender.com" class="btn text-sm px-4 py-2 mt-4 text-center inline-block" onclick="gtag('event', 'click_app_button', { location: 'pricing_business', text: 'Try free' })">Try free</a>
   </section>
 
   <!-- How it works -->
