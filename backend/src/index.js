@@ -10,6 +10,8 @@ import documentsRouter from './routes/documents.js';
 import chatRouter from './routes/chat.js';
 import conversationsRouter from './routes/conversations.js';
 import projectsRouter from './routes/projects.js';
+import plansRouter from './routes/plans.js';
+import { loadPlans } from './services/plan.js';
 
 const app = express();
 
@@ -26,6 +28,7 @@ app.use('/api/documents', documentsRouter);
 app.use('/api/chat', chatRouter);
 app.use('/api/conversations', conversationsRouter);
 app.use('/api/projects', projectsRouter);
+app.use('/api/plans', plansRouter);
 
 app.use((err, req, res, next) => {
   console.error(err);
@@ -38,15 +41,22 @@ async function start() {
   try {
     await connectMongo();
     console.log('MongoDB connected');
+    await loadPlans();
   } catch (e) {
-    console.warn('MongoDB connection failed, continuing without DB:', e.message);
+    console.warn(
+      'MongoDB connection failed, continuing without DB:',
+      e.message,
+    );
   }
 
   try {
     await connectRedis();
     console.log('Redis connected');
   } catch (e) {
-    console.warn('Redis connection failed, continuing without cache:', e.message);
+    console.warn(
+      'Redis connection failed, continuing without cache:',
+      e.message,
+    );
   }
 
   initFirebase();

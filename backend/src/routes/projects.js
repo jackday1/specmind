@@ -1,13 +1,16 @@
 import { Router } from 'express';
 import Project from '../models/Project.js';
 import Team from '../models/Team.js';
+import Member from '../models/Member.js';
 
 const router = Router();
 
 async function getUserTeam(uid) {
-  return Team.findOne({
-    $or: [{ ownerId: uid }, { memberIds: uid }],
-  });
+  const team = await Team.findOne({ ownerId: uid });
+  if (team) return team;
+  const membership = await Member.findOne({ uid });
+  if (!membership) return null;
+  return Team.findById(membership.teamId);
 }
 
 router.post('/', async (req, res) => {

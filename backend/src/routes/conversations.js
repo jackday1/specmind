@@ -1,15 +1,19 @@
 import { Router } from 'express';
 import Conversation from '../models/Conversation.js';
 import Team from '../models/Team.js';
+import Member from '../models/Member.js';
 import Document from '../models/Document.js';
 import { selectRelevantDocs, answerQuestion } from '../services/ai.js';
+import { checkMessageLimit } from '../services/plan.js';
 
 const router = Router();
 
 async function getUserTeam(uid) {
-  return Team.findOne({
-    $or: [{ ownerId: uid }, { memberIds: uid }],
-  });
+  const team = await Team.findOne({ ownerId: uid });
+  if (team) return team;
+  const membership = await Member.findOne({ uid });
+  if (!membership) return null;
+  return Team.findById(membership.teamId);
 }
 
 router.get('/', async (req, res) => {
@@ -85,6 +89,9 @@ router.post('/:id/ask', async (req, res) => {
     const team = await getUserTeam(req.user.uid);
     if (!team) return res.status(404).json({ error: 'You are not in a team' });
 
+    const limitError = checkMessageLimit(team);
+    if (limitError) return res.status(403).json({ error: limitError });
+
     const conversation = await Conversation.findOne({
       _id: req.params.id,
       userId: req.user.uid,
@@ -124,6 +131,8 @@ router.post('/:id/ask', async (req, res) => {
     });
 
     await conversation.save();
+
+    await Team.findByIdAndUpdate(team._id, { $inc: { messageCount: 1 } });
 
     res.json({ answer, conversation });
   } catch (err) {

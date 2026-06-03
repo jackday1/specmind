@@ -13,6 +13,7 @@ export async function authMiddleware(req, res, next) {
       uid: decoded.uid,
       email: decoded.email,
       name: decoded.name || decoded.email,
+      picture: decoded.picture || null,
     };
     next();
   } catch (err) {

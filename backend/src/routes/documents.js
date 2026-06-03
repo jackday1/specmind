@@ -1,16 +1,20 @@
 import { Router } from 'express';
 import Document from '../models/Document.js';
 import Team from '../models/Team.js';
+import Member from '../models/Member.js';
 import { fetchGoogleDocText } from '../services/gdocs.js';
 import { analyzeDocument } from '../services/ai.js';
 import { chunkText } from '../services/storage.js';
+import { checkDocumentLimit } from '../services/plan.js';
 
 const router = Router();
 
 async function getUserTeam(uid) {
-  return Team.findOne({
-    $or: [{ ownerId: uid }, { memberIds: uid }],
-  });
+  const team = await Team.findOne({ ownerId: uid });
+  if (team) return team;
+  const membership = await Member.findOne({ uid });
+  if (!membership) return null;
+  return Team.findById(membership.teamId);
 }
 
 async function runAnalysis(docId, text) {
@@ -78,6 +82,9 @@ router.post('/link', async (req, res) => {
     if (!team) {
       return res.status(404).json({ error: 'You are not in a team' });
     }
+
+    const limitError = await checkDocumentLimit(team, Document);
+    if (limitError) return res.status(403).json({ error: limitError });
 
     const { text, docId, title } = await fetchGoogleDocText(url.trim());
 

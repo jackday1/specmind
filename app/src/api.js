@@ -112,3 +112,7 @@ export async function createProject(name) {
 export async function deleteProject(id) {
   return request(`/projects/${id}`, { method: 'DELETE' });
 }
+
+export async function getPlans() {
+  return request('/plans');
+}

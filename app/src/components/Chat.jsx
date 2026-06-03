@@ -7,6 +7,7 @@ export default function Chat({ teamId, projectId }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+  const [limitError, setLimitError] = useState('');
   const scrollRef = useRef(null);
 
   useEffect(() => { if (projectId) loadConversations(); }, [projectId]);
@@ -24,6 +25,7 @@ export default function Chat({ teamId, projectId }) {
       const conv = await getConversation(id);
       setActiveId(id);
       setMessages(conv.messages || []);
+      setLimitError('');
     } catch (err) { console.error(err); }
   };
 
@@ -34,6 +36,7 @@ export default function Chat({ teamId, projectId }) {
       setConversations((prev) => [conv, ...prev]);
       setActiveId(conv._id);
       setMessages([]);
+      setLimitError('');
     } catch (err) { console.error(err); }
   };
 
@@ -59,8 +62,10 @@ export default function Chat({ teamId, projectId }) {
       const { answer } = await askConversation(activeId, question);
       setMessages((prev) => [...prev, { role: 'assistant', content: answer, timestamp: new Date().toISOString() }]);
       loadConversations();
-    } catch {
-      setMessages((prev) => [...prev, { role: 'assistant', content: 'Something went wrong. Please try again.', timestamp: new Date().toISOString() }]);
+    } catch (err) {
+      const msg = err.message || 'Something went wrong. Please try again.';
+      setLimitError(msg);
+      setMessages((prev) => [...prev, { role: 'assistant', content: msg, timestamp: new Date().toISOString() }]);
     } finally {
       setSending(false);
     }
@@ -109,6 +114,12 @@ export default function Chat({ teamId, projectId }) {
           </div>
         ) : (
           <>
+            {limitError && (
+              <div class="bg-[rgba(229,83,75,0.06)] border-b border-[rgba(229,83,75,0.15)] px-4 py-2.5 text-xs text-[#e5534b] flex items-center gap-2">
+                <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span>{limitError}</span>
+              </div>
+            )}
             <div ref={scrollRef} class="flex-1 overflow-y-auto space-y-4 p-4 md:p-6">
               {messages.length === 0 && <div class="text-center mt-20"><p class="text-sm text-[#8f887e]">Ask a question to get started</p></div>}
               {messages.map((msg, i) => (
@@ -130,8 +141,8 @@ export default function Chat({ teamId, projectId }) {
               )}
             </div>
             <form onSubmit={handleSend} class="flex gap-3 p-4 md:p-6 border-t border-[#2a2520]">
-              <input type="text" value={input} onInput={(e) => setInput(e.target.value)} placeholder="Ask about your specifications..." disabled={sending} class="input-field flex-1 disabled:opacity-30" />
-              <button type="submit" disabled={!input.trim() || sending} class="btn-primary">Send</button>
+              <input type="text" value={input} onInput={(e) => setInput(e.target.value)} placeholder={limitError ? 'Message limit reached' : 'Ask about your specifications...'} disabled={sending || !!limitError} class="input-field flex-1 disabled:opacity-30" />
+              <button type="submit" disabled={!input.trim() || sending || !!limitError} class="btn-primary">Send</button>
             </form>
           </>
         )}

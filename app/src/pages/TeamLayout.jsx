@@ -182,6 +182,9 @@ export default function TeamLayout({ team, user, onTeamUpdate, onLogout }) {
               onChange={handleProjectChange}
               onCreated={handleProjectCreated}
             />
+            {user.photoURL && (
+              <img src={user.photoURL} alt="" class="w-6 h-6 object-cover hidden md:block" referrerpolicy="no-referrer" />
+            )}
             <span class="text-xs text-[#8f887e] hidden md:inline">{user.email}</span>
             <button onClick={onLogout} class="btn-ghost text-xs">Sign out</button>
           </div>

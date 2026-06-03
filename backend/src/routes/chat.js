@@ -1,9 +1,18 @@
 import { Router } from 'express';
 import Team from '../models/Team.js';
+import Member from '../models/Member.js';
 import Document from '../models/Document.js';
 import { selectRelevantDocs, answerQuestion, getChatHistory, addChatMessage } from '../services/ai.js';
 
 const router = Router();
+
+async function getUserTeam(uid) {
+  const team = await Team.findOne({ ownerId: uid });
+  if (team) return team;
+  const membership = await Member.findOne({ uid });
+  if (!membership) return null;
+  return Team.findById(membership.teamId);
+}
 
 router.post('/', async (req, res) => {
   try {
@@ -12,9 +21,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Question is required' });
     }
 
-    const team = await Team.findOne({
-      $or: [{ ownerId: req.user.uid }, { memberIds: req.user.uid }],
-    });
+    const team = await getUserTeam(req.user.uid);
     if (!team) {
       return res.status(404).json({ error: 'You are not in a team' });
     }
@@ -54,9 +61,7 @@ router.post('/', async (req, res) => {
 
 router.get('/history', async (req, res) => {
   try {
-    const team = await Team.findOne({
-      $or: [{ ownerId: req.user.uid }, { memberIds: req.user.uid }],
-    });
+    const team = await getUserTeam(req.user.uid);
     if (!team) {
       return res.status(404).json({ error: 'You are not in a team' });
     }
