@@ -12,7 +12,6 @@ const countBadges = [
   { key: 'mismatches',    color: '#e5534b', label: 'M' },
   { key: 'unclear',       color: '#f0a64b', label: 'U' },
   { key: 'missingConfigs', color: '#f0a64b', label: 'C' },
-  { key: 'devQuestions',  color: '#539bf5', label: 'Q' },
 ];
 
 export default function DocumentList({ onSelectDoc, projectId }) {
@@ -59,7 +58,12 @@ export default function DocumentList({ onSelectDoc, projectId }) {
             ? (analysis.mismatches?.filter((i) => !i.isResolved).length || 0)
               + (analysis.unclear?.filter((i) => !i.isResolved).length || 0)
               + (analysis.missingConfigs?.filter((i) => !i.isResolved).length || 0)
-              + (analysis.devQuestions?.filter((i) => !i.isResolved).length || 0)
+            : 0;
+
+          const totalResolved = hasAnalysis
+            ? (analysis.mismatches?.filter((i) => i.isResolved).length || 0)
+              + (analysis.unclear?.filter((i) => i.isResolved).length || 0)
+              + (analysis.missingConfigs?.filter((i) => i.isResolved).length || 0)
             : 0;
 
           return (
@@ -75,7 +79,10 @@ export default function DocumentList({ onSelectDoc, projectId }) {
                     {hasAnalysis && totalIssues > 0 && (
                       <span class="badge text-[#f0a64b] bg-[rgba(240,166,75,0.08)] border-[rgba(240,166,75,0.15)]">{totalIssues} issues</span>
                     )}
-                    {hasAnalysis && totalIssues === 0 && (
+                    {hasAnalysis && totalResolved > 0 && (
+                      <span class="badge text-[#3fb950] bg-[rgba(63,185,80,0.08)] border-[rgba(63,185,80,0.15)]">{totalResolved} fixed</span>
+                    )}
+                    {hasAnalysis && totalIssues === 0 && totalResolved === 0 && (
                       <span class="badge text-[#3fb950] bg-[rgba(63,185,80,0.08)] border-[rgba(63,185,80,0.15)]">Clean</span>
                     )}
                   </div>
