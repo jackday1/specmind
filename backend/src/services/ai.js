@@ -9,66 +9,80 @@ const openai = new OpenAI({
 
 const ANALYSIS_SYSTEM_PROMPT = `You are a technical spec reviewer. Analyze the specification document and identify issues.
 
-Output your findings in EXACTLY this format with these exact section headers:
+For each issue you find, also provide a specific, actionable suggestion on how to fix it.
 
-## Mismatches
-- [issue description]
-
-## Unclear
-- [issue description]
-
-## Missing Configs
-- [issue description]
-
-## Dev Questions
-- [question description]
+Output your findings as a JSON object with this exact structure:
+{
+  "mismatches": [
+    { "content": "The API endpoint docs say /users but the examples use /user", "suggestion": "Standardize on /users throughout the doc and update all example requests to match" }
+  ],
+  "unclear": [
+    { "content": "The retry policy is described as 'reasonable backoff' without specifics", "suggestion": "Specify exact backoff parameters, e.g. exponential backoff starting at 1s with a max of 30s and up to 3 retries" }
+  ],
+  "missingConfigs": [
+    { "content": "Database connection timeout is not defined", "suggestion": "Add a DB_CONNECTION_TIMEOUT env var with a default of 30 seconds" }
+  ],
+  "devQuestions": [
+    { "content": "Should pagination be cursor-based or offset-based?", "suggestion": "Use cursor-based pagination for better performance on large datasets; specify the cursor parameter name (e.g. 'after') and response format" }
+  ]
 
 Rules:
-- Each bullet point must start with "- " on its own line
-- If a section has no issues, write "None" as the only bullet
-- Do NOT include any other text, explanations, or markdown outside these sections`;
+- Each array can contain zero or more items
+- Each item MUST have both "content" (the issue) and "suggestion" (how to fix it) fields
+- Return ONLY valid JSON — no markdown code fences, no extra text`;
 
-const REANALYZE_PROMPT = `You are a technical spec reviewer re-checking a specification that was updated based on previous feedback.
+const REANALYZE_PROMPT = `You are a technical spec reviewer re-checking a specification document. You will receive both the OLD version and the NEW version. Compare them carefully.
 
-Below are the issues found in the PREVIOUS version. The document has been updated. Re-analyze it and:
+Step 1 — Identify what changed:
+- Compare the two versions and summarize the actual changes made (sections added, removed, or modified)
+- Only mark an issue as fixed if the relevant part of the document was genuinely updated to address it
 
-1. For each previous issue that is FIXED — do NOT include it in your output
-2. For each previous issue that STILL EXISTS — include it again
-3. For any NEW issues you find — include them
-
-Previous issues:
+Step 2 — Previous issues to check:
 
 {previousIssues}
 
-Output your NEW findings in EXACTLY this format:
+Step 3 — Output your findings as a JSON object with this structure:
+{
+  "changesSummary": "Brief summary of what changed between the two versions. If nothing meaningful changed, say 'No significant changes detected.'",
+  "mismatches": [
+    { "content": "issue that still exists", "suggestion": "how to fix it" }
+  ],
+  "unclear": [...],
+  "missingConfigs": [...],
+  "devQuestions": [...],
+  "fixed": {
+    "mismatches": ["exact content text of issue that is now fixed"],
+    "unclear": ["exact content text of issue that is now fixed"],
+    "missingConfigs": ["exact content text of issue that is now fixed"],
+    "devQuestions": ["exact content text of issue that is now fixed"]
+  }
+}
 
-## Mismatches
-- [issue description]
+CRITICAL RULES:
+- The "fixed" list must ONLY contain issues whose exact text was addressed by actual document changes. If the relevant section was NOT changed, the issue is NOT fixed.
+- If the document has no meaningful changes, all previous issues must remain in the active lists and the "fixed" lists must be empty.
+- Copy the exact "content" text from the previous issues list into the "fixed" list — do not paraphrase.
+- Each array can contain zero or more items
+- Each active issue MUST have both "content" and "suggestion" fields
+- Return ONLY valid JSON — no markdown code fences, no extra text`;
 
-## Unclear
-- [issue description]
-
-## Missing Configs
-- [issue description]
-
-## Dev Questions
-- [question description]
-
-Rules:
-- Each bullet point must start with "- " on its own line
-- If a section has no issues, write "None" as the only bullet
-- Do NOT include any other text outside these sections`;
-
-export async function analyzeDocument(text, previousIssues) {
+export async function analyzeDocument(text, previousIssues, oldText) {
   const systemPrompt = previousIssues
     ? REANALYZE_PROMPT.replace('{previousIssues}', previousIssues)
     : ANALYSIS_SYSTEM_PROMPT;
+
+  let userContent;
+  if (oldText) {
+    userContent = `=== OLD DOCUMENT VERSION ===\n${oldText.slice(0, 15000)}\n\n=== NEW DOCUMENT VERSION ===\n${text.slice(0, 15000)}`;
+  } else {
+    userContent = text.slice(0, 30000);
+  }
 
   const response = await openai.chat.completions.create({
     model: 'deepseek-chat',
     messages: [
       { role: 'system', content: systemPrompt },
-      { role: 'user', content: text.slice(0, 30000) },
+      { role: 'user', content: userContent },
     ],
     temperature: 0.3,
   });
@@ -83,8 +97,44 @@ function parseAnalysis(raw) {
     unclear: [],
     missingConfigs: [],
     devQuestions: [],
+    fixed: null,
+    changesSummary: '',
   };
 
+  // Primary path: parse JSON (the prompt now requests JSON directly)
+  const jsonResult = tryJsonParse(raw);
+  if (jsonResult) {
+    for (const key of ['mismatches', 'unclear', 'missingConfigs', 'devQuestions']) {
+      if (Array.isArray(jsonResult[key])) {
+        sections[key] = jsonResult[key].map((item) =>
+          typeof item === 'string'
+            ? { content: item, suggestion: '', isResolved: false }
+            : { content: item.content || '', suggestion: item.suggestion || '', isResolved: false }
+        );
+      }
+    }
+
+    if (jsonResult.fixed && typeof jsonResult.fixed === 'object') {
+      sections.fixed = {};
+      for (const key of ['mismatches', 'unclear', 'missingConfigs', 'devQuestions']) {
+        if (Array.isArray(jsonResult.fixed[key])) {
+          sections.fixed[key] = jsonResult.fixed[key].filter((f) => typeof f === 'string' && f.trim());
+        }
+      }
+    }
+
+    if (jsonResult.changesSummary) {
+      sections.changesSummary = jsonResult.changesSummary;
+    }
+
+    const total = Object.values(sections).reduce((s, a) => {
+      if (Array.isArray(a)) return s + a.length;
+      return s;
+    }, 0);
+    if (total > 0) return sections;
+  }
+
+  // Fallback: parse markdown format
   const sectionMap = {
     'Mismatches': 'mismatches',
     'Unclear': 'unclear',
@@ -108,22 +158,7 @@ function parseAnalysis(raw) {
     if (currentKey && trimmed.startsWith('- ')) {
       const item = trimmed.slice(2).trim();
       if (item && item.toLowerCase() !== 'none') {
-        sections[currentKey].push({ content: item, isResolved: false });
-      }
-    }
-  }
-
-  // If parsing yielded nothing, try JSON as fallback
-  const total = Object.values(sections).reduce((s, a) => s + a.length, 0);
-  if (total === 0) {
-    const jsonResult = tryJsonParse(raw);
-    if (jsonResult) {
-      for (const key of Object.keys(sections)) {
-        if (Array.isArray(jsonResult[key])) {
-          sections[key] = jsonResult[key].map((item) =>
-            typeof item === 'string' ? { content: item, isResolved: false } : item
-          );
-        }
+        sections[currentKey].push({ content: item, suggestion: '', isResolved: false });
       }
     }
   }

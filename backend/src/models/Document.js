@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 const analysisItemSchema = new mongoose.Schema(
   {
     content: { type: String, required: true },
+    suggestion: { type: String, default: '' },
     isResolved: { type: Boolean, default: false },
   },
   { _id: false }

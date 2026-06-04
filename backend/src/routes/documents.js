@@ -21,36 +21,59 @@ async function runAnalysis(docId, text) {
   try {
     await Document.findByIdAndUpdate(docId, { status: 'processing' });
 
-    const doc = await Document.findById(docId).select('previousAnalysis');
+    const doc = await Document.findById(docId).select('previousAnalysis extractedText');
+    const oldText = doc?.previousAnalysis ? doc.extractedText : null;
     const chunks = chunkText(text);
 
     let previousIssues = null;
     if (doc?.previousAnalysis) {
       const parts = [];
       for (const key of ['mismatches', 'unclear', 'missingConfigs', 'devQuestions']) {
-        const items = doc.previousAnalysis[key] || [];
-        if (items.length > 0) {
+        const unresolved = (doc.previousAnalysis[key] || []).filter((i) => !i.isResolved);
+        if (unresolved.length > 0) {
           const label = { mismatches: 'Mismatches', unclear: 'Unclear', missingConfigs: 'Missing Configs', devQuestions: 'Dev Questions' }[key];
-          parts.push(`## ${label}\n${items.map((i) => `- ${i.content}`).join('\n')}`);
+          parts.push(`## ${label}\n${unresolved.map((i) => `- ${i.content}`).join('\n')}`);
         }
       }
       previousIssues = parts.join('\n\n');
     }
 
-    const analysis = await analyzeDocument(text, previousIssues);
+    const analysis = await analyzeDocument(text, previousIssues, oldText);
 
     if (doc?.previousAnalysis) {
       const prev = doc.previousAnalysis;
-      for (const key of ['mismatches', 'unclear', 'missingConfigs', 'devQuestions']) {
+      const fixed = analysis.fixed || {};
+      const categories = ['mismatches', 'unclear', 'missingConfigs', 'devQuestions'];
+
+      for (const key of categories) {
         const oldItems = prev[key] || [];
         const newItems = analysis[key] || [];
         const newContents = new Set(newItems.map((i) => i.content));
+        const fixedContents = new Set((fixed[key] || []).map((f) => f.trim()));
+
         for (const oldItem of oldItems) {
-          if (!newContents.has(oldItem.content)) {
-            newItems.push({ content: oldItem.content, isResolved: true });
+          if (oldItem.isResolved) {
+            if (!newContents.has(oldItem.content)) {
+              newItems.push({ content: oldItem.content, suggestion: oldItem.suggestion || '', isResolved: true });
+            }
+            continue;
+          }
+
+          if (fixedContents.has(oldItem.content)) {
+            if (!newContents.has(oldItem.content)) {
+              newItems.push({ content: oldItem.content, suggestion: oldItem.suggestion || '', isResolved: true });
+            } else {
+              const existing = newItems.find((i) => i.content === oldItem.content);
+              if (existing) existing.isResolved = true;
+            }
+          } else if (!newContents.has(oldItem.content)) {
+            newItems.push({ content: oldItem.content, suggestion: oldItem.suggestion || '', isResolved: false });
           }
         }
       }
+
+      delete analysis.fixed;
+      delete analysis.changesSummary;
     }
 
     await Document.findByIdAndUpdate(docId, {

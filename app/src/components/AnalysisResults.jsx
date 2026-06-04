@@ -182,11 +182,19 @@ export default function AnalysisResults({ docId, onBack }) {
                 </div>
               </div>
               {items.length > 0 ? (
-                <ul class="space-y-2">
+                <ul class="space-y-3">
                   {items.map((item, i) => (
-                    <li key={i} class={`flex items-start gap-2 text-xs leading-relaxed ${item.isResolved ? 'text-[#3fb950]/70 line-through' : 'text-[#d6d0c8]'}`}>
-                      <span class={`w-1 h-1 mt-1.5 shrink-0 ${item.isResolved ? 'bg-[#3fb950]' : tc.replace('text-', 'bg-')}`} />
-                      {item.content}
+                    <li key={i} class={item.isResolved ? 'opacity-60' : ''}>
+                      <div class={`flex items-start gap-2 text-xs leading-relaxed ${item.isResolved ? 'text-[#3fb950]/70 line-through' : 'text-[#d6d0c8]'}`}>
+                        <span class={`w-1 h-1 mt-1.5 shrink-0 ${item.isResolved ? 'bg-[#3fb950]' : tc.replace('text-', 'bg-')}`} />
+                        {item.content}
+                      </div>
+                      {item.suggestion && (
+                        <div class={`ml-3.5 mt-1 pl-3 border-l-2 border-[#2a2520] text-[11px] leading-relaxed ${item.isResolved ? 'text-[#3fb950]/40' : 'text-[#8f887e]'}`}>
+                          <span class="mono text-[10px] tracking-wide text-[#635d56]">SUGGESTION </span>
+                          {item.suggestion}
+                        </div>
+                      )}
                     </li>
                   ))}
                 </ul>
