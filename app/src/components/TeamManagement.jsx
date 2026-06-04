@@ -105,6 +105,8 @@ export default function TeamManagement({ team, user, isOwner, onTeamUpdate }) {
           <h2 class="text-lg font-semibold text-[#efe9e1]">{team.name}</h2>
           <p class="text-xs text-[#8f887e] mt-0.5">
             Created {new Date(team.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+            <span class="text-[#635d56] mx-1">·</span>
+            {isTrialActive ? `Trial · ${trialPlanConfig.label}` : activePlan.label} plan
           </p>
         </div>
         <span class={`badge ml-auto ${isTrialActive ? 'bg-[rgba(59,130,246,0.08)] text-[#539bf5] border-[rgba(83,155,245,0.15)]' : (team.trialPlan ? 'bg-[rgba(240,101,67,0.08)] text-[#f06543] border-[rgba(240,101,67,0.15)]' : 'bg-[rgba(99,99,86,0.08)] text-[#8f887e] border-[rgba(99,99,86,0.15)]')}`}>
