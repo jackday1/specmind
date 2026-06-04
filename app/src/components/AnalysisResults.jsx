@@ -109,7 +109,17 @@ export default function AnalysisResults({ docId, onBack }) {
             </button>
           )}
           <div>
-            <h2 class="text-sm font-semibold text-[#efe9e1]">{doc.name}</h2>
+            <div class="flex items-center gap-2">
+              <h2 class="text-sm font-semibold text-[#efe9e1]">{doc.name}</h2>
+              {doc.sourceUrl && (
+                <a href={doc.sourceUrl} target="_blank" rel="noopener noreferrer" class="btn-ghost text-xs inline-flex items-center gap-1" title="Open Google Doc">
+                  <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                  </svg>
+                  Open
+                </a>
+              )}
+            </div>
             <span class="badge text-[#539bf5] bg-[rgba(83,155,245,0.08)] border-[rgba(83,155,245,0.15)] mt-0.5 inline-block">
               {reanalyzing ? 'Re-analyzing' : 'Analyzing'}
             </span>
@@ -133,7 +143,17 @@ export default function AnalysisResults({ docId, onBack }) {
           </button>
         )}
         <div>
-          <h2 class="text-sm font-semibold text-[#efe9e1]">{doc.name}</h2>
+          <div class="flex items-center gap-2">
+            <h2 class="text-sm font-semibold text-[#efe9e1]">{doc.name}</h2>
+            {doc.sourceUrl && (
+              <a href={doc.sourceUrl} target="_blank" rel="noopener noreferrer" class="btn-ghost text-xs inline-flex items-center gap-1" title="Open Google Doc">
+                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                </svg>
+                Open
+              </a>
+            )}
+          </div>
           <p class="text-[10px] text-[#635d56] mono mt-0.5">Analyzed {new Date(doc.updatedAt).toLocaleDateString()}</p>
         </div>
       </div>

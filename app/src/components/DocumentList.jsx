@@ -100,6 +100,14 @@ export default function DocumentList({ onSelectDoc, projectId }) {
                   );
                 })}
                 <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ml-1">
+                  {doc.sourceUrl && (
+                    <a href={doc.sourceUrl} target="_blank" rel="noopener noreferrer" class="btn-ghost text-xs inline-flex items-center gap-1">
+                      <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                      </svg>
+                      Open
+                    </a>
+                  )}
                   {doc.status === 'analyzed' && (
                     <button onClick={() => onSelectDoc(doc._id)} class="btn-ghost text-xs">View</button>
                   )}
