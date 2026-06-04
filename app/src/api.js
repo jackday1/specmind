@@ -101,7 +101,7 @@ export async function askConversation(id, question) {
 
 export async function askConversationStream(id, question, { onChunk, onDone, onError, signal }) {
   const token = await getToken();
-  const res = await fetch(`/api/conversations/${id}/ask`, {
+  const res = await fetch(`${BASE}/conversations/${id}/ask`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
